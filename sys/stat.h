@@ -1,451 +1,407 @@
-/* Copyright (C) 1991-2017 Free Software Foundation, Inc.
-   This file is part of the GNU C Library.
-   The GNU C Library is free software; you can redistribute it and/or
-   modify it under the terms of the GNU Lesser General Public
-   License as published by the Free Software Foundation; either
-   version 2.1 of the License, or (at your option) any later version.
-   The GNU C Library is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   Lesser General Public License for more details.
-   You should have received a copy of the GNU Lesser General Public
-   License along with the GNU C Library; if not, see
-   <http://www.gnu.org/licenses/>.  */
 /*
- *        POSIX Standard: 5.6 File Characteristics        <sys/stat.h>
+ * Copyright (c) 2000-2014 Apple Inc. All rights reserved.
+ *
+ * @APPLE_OSREFERENCE_LICENSE_HEADER_START@
+ * 
+ * This file contains Original Code and/or Modifications of Original Code
+ * as defined in and that are subject to the Apple Public Source License
+ * Version 2.0 (the 'License'). You may not use this file except in
+ * compliance with the License. The rights granted to you under the License
+ * may not be used to create, or enable the creation or redistribution of,
+ * unlawful or unlicensed copies of an Apple operating system, or to
+ * circumvent, violate, or enable the circumvention or violation of, any
+ * terms of an Apple operating system software license agreement.
+ * 
+ * Please obtain a copy of the License at
+ * http://www.opensource.apple.com/apsl/ and read it before using this file.
+ * 
+ * The Original Code and all software distributed under the License are
+ * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
+ * Please see the License for the specific language governing rights and
+ * limitations under the License.
+ * 
+ * @APPLE_OSREFERENCE_LICENSE_HEADER_END@
  */
-#ifndef        _SYS_STAT_H
-#define        _SYS_STAT_H        1
-#include <features.h>
-#include <bits/types.h>                /* For __mode_t and __dev_t.  */
-#ifdef __USE_XOPEN2K8
-# include <bits/types/struct_timespec.h>
+/* Copyright (c) 1995 NeXT Computer, Inc. All Rights Reserved */
+/*-
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)stat.h	8.9 (Berkeley) 8/17/94
+ */
+
+
+#ifndef _SYS_STAT_H_
+#define	_SYS_STAT_H_
+
+#include <sys/_types.h>
+#include <sys/cdefs.h>
+#include <Availability.h>
+
+/* [XSI] The timespec structure may be defined as described in <time.h> */
+#include <sys/_types/_timespec.h>
+
+/*
+ * [XSI] The blkcnt_t, blksize_t, dev_t, ino_t, mode_t, nlink_t, uid_t,
+ * gid_t, off_t, and time_t types shall be defined as described in
+ * <sys/types.h>.
+ */
+#include <sys/_types/_blkcnt_t.h>
+#include <sys/_types/_blksize_t.h>
+#include <sys/_types/_dev_t.h>			/* device number */
+#include <sys/_types/_ino_t.h>
+
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+#include <sys/_types/_ino64_t.h>
+#endif /* !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE) */
+
+#include <sys/_types/_mode_t.h>
+#include <sys/_types/_nlink_t.h>
+#include <sys/_types/_uid_t.h>
+#include <sys/_types/_gid_t.h>
+#include <sys/_types/_off_t.h>
+#include <sys/_types/_time_t.h>
+
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+/*
+ * XXX So deprecated, it would make your head spin
+ *
+ * The old stat structure.  In fact, this is not used by the kernel at all,
+ * and should not be used by user space, and should be removed from this
+ * header file entirely (along with the unused cvtstat() prototype in
+ * vnode_internal.h).
+ */
+struct ostat {
+	__uint16_t	st_dev;		/* inode's device */
+	ino_t		st_ino;		/* inode's number */
+	mode_t		st_mode;	/* inode protection mode */
+	nlink_t		st_nlink;	/* number of hard links */
+	__uint16_t	st_uid;		/* user ID of the file's owner */
+	__uint16_t	st_gid;		/* group ID of the file's group */
+	__uint16_t	st_rdev;	/* device type */
+	__int32_t	st_size;	/* file size, in bytes */
+	struct	timespec st_atimespec;	/* time of last access */
+	struct	timespec st_mtimespec;	/* time of last data modification */
+	struct	timespec st_ctimespec;	/* time of last file status change */
+	__int32_t	st_blksize;	/* optimal blocksize for I/O */
+	__int32_t	st_blocks;	/* blocks allocated for file */
+	__uint32_t	st_flags;	/* user defined flags for file */
+	__uint32_t	st_gen;		/* file generation number */
+};
+
+#define __DARWIN_STRUCT_STAT64_TIMES \
+	struct timespec st_atimespec;		/* time of last access */ \
+	struct timespec st_mtimespec;		/* time of last data modification */ \
+	struct timespec st_ctimespec;		/* time of last status change */ \
+	struct timespec st_birthtimespec;	/* time of file creation(birth) */
+
+#else /* (_POSIX_C_SOURCE && !_DARWIN_C_SOURCE) */
+
+#define __DARWIN_STRUCT_STAT64_TIMES \
+	time_t		st_atime;		/* [XSI] Time of last access */ \
+	long		st_atimensec;		/* nsec of last access */ \
+	time_t		st_mtime;		/* [XSI] Last data modification time */ \
+	long		st_mtimensec;		/* last data modification nsec */ \
+	time_t		st_ctime;		/* [XSI] Time of last status change */ \
+	long		st_ctimensec;		/* nsec of last status change */ \
+	time_t		st_birthtime;		/*  File creation time(birth)  */ \
+	long		st_birthtimensec;	/* nsec of File creation time */
+
+#endif /* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+
+/*
+ * This structure is used as the second parameter to the fstat64(),
+ * lstat64(), and stat64() functions, and for struct stat when
+ * __DARWIN_64_BIT_INO_T is set. __DARWIN_STRUCT_STAT64 is defined
+ * above, depending on whether we use struct timespec or the direct
+ * components.
+ *
+ * This is simillar to stat except for 64bit inode number
+ * number instead of 32bit ino_t and the addition of create(birth) time.
+ */
+#define __DARWIN_STRUCT_STAT64 { \
+	dev_t		st_dev;			/* [XSI] ID of device containing file */ \
+	mode_t		st_mode;		/* [XSI] Mode of file (see below) */ \
+	nlink_t		st_nlink;		/* [XSI] Number of hard links */ \
+	__darwin_ino64_t st_ino;		/* [XSI] File serial number */ \
+	uid_t		st_uid;			/* [XSI] User ID of the file */ \
+	gid_t		st_gid;			/* [XSI] Group ID of the file */ \
+	dev_t		st_rdev;		/* [XSI] Device ID */ \
+	__DARWIN_STRUCT_STAT64_TIMES \
+	off_t		st_size;		/* [XSI] file size, in bytes */ \
+	blkcnt_t	st_blocks;		/* [XSI] blocks allocated for file */ \
+	blksize_t	st_blksize;		/* [XSI] optimal blocksize for I/O */ \
+	__uint32_t	st_flags;		/* user defined flags for file */ \
+	__uint32_t	st_gen;			/* file generation number */ \
+	__int32_t	st_lspare;		/* RESERVED: DO NOT USE! */ \
+	__int64_t	st_qspare[2];		/* RESERVED: DO NOT USE! */ \
+}
+
+/*
+ * [XSI] This structure is used as the second parameter to the fstat(),
+ * lstat(), and stat() functions.
+ */
+#if __DARWIN_64_BIT_INO_T
+
+struct stat __DARWIN_STRUCT_STAT64;
+
+#else /* !__DARWIN_64_BIT_INO_T */
+
+struct stat {
+	dev_t	 	st_dev;		/* [XSI] ID of device containing file */
+	ino_t	  	st_ino;		/* [XSI] File serial number */
+	mode_t	 	st_mode;	/* [XSI] Mode of file (see below) */
+	nlink_t		st_nlink;	/* [XSI] Number of hard links */
+	uid_t		st_uid;		/* [XSI] User ID of the file */
+	gid_t		st_gid;		/* [XSI] Group ID of the file */
+	dev_t		st_rdev;	/* [XSI] Device ID */
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+	struct	timespec st_atimespec;	/* time of last access */
+	struct	timespec st_mtimespec;	/* time of last data modification */
+	struct	timespec st_ctimespec;	/* time of last status change */
+#else
+	time_t		st_atime;	/* [XSI] Time of last access */
+	long		st_atimensec;	/* nsec of last access */
+	time_t		st_mtime;	/* [XSI] Last data modification time */
+	long		st_mtimensec;	/* last data modification nsec */
+	time_t		st_ctime;	/* [XSI] Time of last status change */
+	long		st_ctimensec;	/* nsec of last status change */
 #endif
-#if defined __USE_XOPEN || defined __USE_XOPEN2K
-/* The Single Unix specification says that some more types are
-   available here.  */
-# include <bits/types/time_t.h>
-# ifndef __dev_t_defined
-typedef __dev_t dev_t;
-#  define __dev_t_defined
-# endif
-# ifndef __gid_t_defined
-typedef __gid_t gid_t;
-#  define __gid_t_defined
-# endif
-# ifndef __ino_t_defined
-#  ifndef __USE_FILE_OFFSET64
-typedef __ino_t ino_t;
-#  else
-typedef __ino64_t ino_t;
-#  endif
-#  define __ino_t_defined
-# endif
-# ifndef __mode_t_defined
-typedef __mode_t mode_t;
-#  define __mode_t_defined
-# endif
-# ifndef __nlink_t_defined
-typedef __nlink_t nlink_t;
-#  define __nlink_t_defined
-# endif
-# ifndef __off_t_defined
-#  ifndef __USE_FILE_OFFSET64
-typedef __off_t off_t;
-#  else
-typedef __off64_t off_t;
-#  endif
-#  define __off_t_defined
-# endif
-# ifndef __uid_t_defined
-typedef __uid_t uid_t;
-#  define __uid_t_defined
-# endif
-#endif        /* X/Open */
-#ifdef __USE_UNIX98
-# ifndef __blkcnt_t_defined
-#  ifndef __USE_FILE_OFFSET64
-typedef __blkcnt_t blkcnt_t;
-#  else
-typedef __blkcnt64_t blkcnt_t;
-#  endif
-#  define __blkcnt_t_defined
-# endif
-# ifndef __blksize_t_defined
-typedef __blksize_t blksize_t;
-#  define __blksize_t_defined
-# endif
-#endif        /* Unix98 */
+	off_t		st_size;	/* [XSI] file size, in bytes */
+	blkcnt_t	st_blocks;	/* [XSI] blocks allocated for file */
+	blksize_t	st_blksize;	/* [XSI] optimal blocksize for I/O */
+	__uint32_t	st_flags;	/* user defined flags for file */
+	__uint32_t	st_gen;		/* file generation number */
+	__int32_t	st_lspare;	/* RESERVED: DO NOT USE! */
+	__int64_t	st_qspare[2];	/* RESERVED: DO NOT USE! */
+};
+
+#endif /* __DARWIN_64_BIT_INO_T */
+
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+
+#if !__DARWIN_ONLY_64_BIT_INO_T
+
+struct stat64 __DARWIN_STRUCT_STAT64;
+
+#endif /* !__DARWIN_ONLY_64_BIT_INO_T */
+
+#endif /* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+
+
+
+
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+#define st_atime st_atimespec.tv_sec
+#define st_mtime st_mtimespec.tv_sec
+#define st_ctime st_ctimespec.tv_sec
+#define st_birthtime st_birthtimespec.tv_sec
+#endif /* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+
+/*
+ * [XSI] The following are symbolic names for the values of type mode_t.  They
+ * are bitmap values.
+ */
+#include <sys/_types/_s_ifmt.h>
+
+/*
+ * [XSI] The following macros shall be provided to test whether a file is
+ * of the specified type.  The value m supplied to the macros is the value
+ * of st_mode from a stat structure.  The macro shall evaluate to a non-zero
+ * value if the test is true; 0 if the test is false.
+ */
+#define	S_ISBLK(m)	(((m) & S_IFMT) == S_IFBLK)	/* block special */
+#define	S_ISCHR(m)	(((m) & S_IFMT) == S_IFCHR)	/* char special */
+#define	S_ISDIR(m)	(((m) & S_IFMT) == S_IFDIR)	/* directory */
+#define	S_ISFIFO(m)	(((m) & S_IFMT) == S_IFIFO)	/* fifo or socket */
+#define	S_ISREG(m)	(((m) & S_IFMT) == S_IFREG)	/* regular file */
+#define	S_ISLNK(m)	(((m) & S_IFMT) == S_IFLNK)	/* symbolic link */
+#define	S_ISSOCK(m)	(((m) & S_IFMT) == S_IFSOCK)	/* socket */
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+#define	S_ISWHT(m)	(((m) & S_IFMT) == S_IFWHT)	/* OBSOLETE: whiteout */
+#endif
+
+/*
+ * [XSI] The implementation may implement message queues, semaphores, or
+ * shared memory objects as distinct file types.  The following macros
+ * shall be provided to test whether a file is of the specified type.
+ * The value of the buf argument supplied to the macros is a pointer to
+ * a stat structure.  The macro shall evaluate to a non-zero value if
+ * the specified object is implemented as a distinct file type and the
+ * specified file type is contained in the stat structure referenced by
+ * buf.  Otherwise, the macro shall evaluate to zero.
+ *
+ * NOTE:	The current implementation does not do this, although
+ *		this may change in future revisions, and co currently only
+ *		provides these macros to ensure source compatability with
+ *		implementations which do.
+ */
+#define	S_TYPEISMQ(buf)		(0)	/* Test for a message queue */
+#define	S_TYPEISSEM(buf)	(0)	/* Test for a semaphore */
+#define	S_TYPEISSHM(buf)	(0)	/* Test for a shared memory object */
+
+/*
+ * [TYM] The implementation may implement typed memory objects as distinct
+ * file types, and the following macro shall test whether a file is of the
+ * specified type.  The value of the buf argument supplied to the macros is
+ * a pointer to a stat structure.  The macro shall evaluate to a non-zero
+ * value if the specified object is implemented as a distinct file type and
+ * the specified file type is contained in the stat structure referenced by
+ * buf.  Otherwise, the macro shall evaluate to zero.
+ *
+ * NOTE:	The current implementation does not do this, although
+ *		this may change in future revisions, and co currently only
+ *		provides this macro to ensure source compatability with
+ *		implementations which do.
+ */
+#define	S_TYPEISTMO(buf)	(0)	/* Test for a typed memory object */
+
+
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+#define	ACCESSPERMS	(S_IRWXU|S_IRWXG|S_IRWXO)	/* 0777 */
+							/* 7777 */
+#define	ALLPERMS	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
+							/* 0666 */
+#define	DEFFILEMODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
+
+#define S_BLKSIZE	512		/* block size used in the stat struct */
+
+/*
+ * Definitions of flags stored in file flags word.
+ *
+ * Super-user and owner changeable flags.
+ */
+#define	UF_SETTABLE	0x0000ffff	/* mask of owner changeable flags */
+#define	UF_NODUMP	0x00000001	/* do not dump file */
+#define	UF_IMMUTABLE	0x00000002	/* file may not be changed */
+#define	UF_APPEND	0x00000004	/* writes to file may only append */
+#define UF_OPAQUE	0x00000008	/* directory is opaque wrt. union */
+/*
+ * The following bit is reserved for FreeBSD.  It is not implemented
+ * in Mac OS X.
+ */
+/* #define UF_NOUNLINK	0x00000010 */	/* file may not be removed or renamed */
+#define UF_COMPRESSED	0x00000020	/* file is compressed (some file-systems) */
+
+/* UF_TRACKED is used for dealing with document IDs.  We no longer issue
+   notifications for deletes or renames for files which have UF_TRACKED set. */
+#define UF_TRACKED		0x00000040
+
+#define UF_DATAVAULT	0x00000080	/* entitlement required for reading */
+					/* and writing */
+
+/* Bits 0x0100 through 0x4000 are currently undefined. */
+#define UF_HIDDEN	0x00008000	/* hint that this item should not be */
+					/* displayed in a GUI */
+/*
+ * Super-user changeable flags.
+ */
+#define	SF_SUPPORTED	0x001f0000	/* mask of superuser supported flags */
+#define	SF_SETTABLE	0xffff0000	/* mask of superuser changeable flags */
+#define	SF_ARCHIVED	0x00010000	/* file is archived */
+#define	SF_IMMUTABLE	0x00020000	/* file may not be changed */
+#define	SF_APPEND	0x00040000	/* writes to file may only append */
+#define SF_RESTRICTED	0x00080000	/* entitlement required for writing */
+#define SF_NOUNLINK	0x00100000	/* Item may not be removed, renamed or mounted on */
+
+/*
+ * The following two bits are reserved for FreeBSD.  They are not
+ * implemented in Mac OS X.
+ */
+/* #define SF_SNAPSHOT	0x00200000 */	/* snapshot inode */
+/* NOTE: There is no SF_HIDDEN bit. */
+
+#endif
+
+
 __BEGIN_DECLS
-#include <bits/stat.h>
-#if defined __USE_MISC || defined __USE_XOPEN
-# define S_IFMT                __S_IFMT
-# define S_IFDIR        __S_IFDIR
-# define S_IFCHR        __S_IFCHR
-# define S_IFBLK        __S_IFBLK
-# define S_IFREG        __S_IFREG
-# ifdef __S_IFIFO
-#  define S_IFIFO        __S_IFIFO
-# endif
-# ifdef __S_IFLNK
-#  define S_IFLNK        __S_IFLNK
-# endif
-# if (defined __USE_MISC || defined __USE_XOPEN_EXTENDED) \
-     && defined __S_IFSOCK
-#  define S_IFSOCK        __S_IFSOCK
-# endif
+/* [XSI] */
+int	chmod(const char *, mode_t) __DARWIN_ALIAS(chmod);
+int	fchmod(int, mode_t) __DARWIN_ALIAS(fchmod);
+int	fstat(int, struct stat *) __DARWIN_INODE64(fstat);
+int	lstat(const char *, struct stat *) __DARWIN_INODE64(lstat);
+int	mkdir(const char *, mode_t);
+int	mkfifo(const char *, mode_t);
+int	stat(const char *, struct stat *) __DARWIN_INODE64(stat);
+int	mknod(const char *, mode_t, dev_t);
+mode_t	umask(mode_t);
+
+#if __DARWIN_C_LEVEL >= 200809L
+int	fchmodat(int, const char *, mode_t, int) __OSX_AVAILABLE_STARTING(__MAC_10_10, __IPHONE_8_0);
+int	fstatat(int, const char *, struct stat *, int) __DARWIN_INODE64(fstatat) __OSX_AVAILABLE_STARTING(__MAC_10_10, __IPHONE_8_0);
+int	mkdirat(int, const char *, mode_t) __OSX_AVAILABLE_STARTING(__MAC_10_10, __IPHONE_8_0);
+
+#define	UTIME_NOW	-1
+#define	UTIME_OMIT	-2
+
+int	futimens(int __fd, const struct timespec __times[2]) __API_AVAILABLE(macosx(10.13), ios(11.0), tvos(11.0), watchos(4.0));
+int	utimensat(int __fd, const char *__path, const struct timespec __times[2],
+		int __flag) __API_AVAILABLE(macosx(10.13), ios(11.0), tvos(11.0), watchos(4.0));
 #endif
-/* Test macros for file types.        */
-#define        __S_ISTYPE(mode, mask)        (((mode) & __S_IFMT) == (mask))
-#define        S_ISDIR(mode)         __S_ISTYPE((mode), __S_IFDIR)
-#define        S_ISCHR(mode)         __S_ISTYPE((mode), __S_IFCHR)
-#define        S_ISBLK(mode)         __S_ISTYPE((mode), __S_IFBLK)
-#define        S_ISREG(mode)         __S_ISTYPE((mode), __S_IFREG)
-#ifdef __S_IFIFO
-# define S_ISFIFO(mode)         __S_ISTYPE((mode), __S_IFIFO)
-#endif
-#ifdef __S_IFLNK
-# define S_ISLNK(mode)         __S_ISTYPE((mode), __S_IFLNK)
-#endif
-#if defined __USE_MISC && !defined __S_IFLNK
-# define S_ISLNK(mode)  0
-#endif
-#if (defined __USE_XOPEN_EXTENDED || defined __USE_XOPEN2K) \
-    && defined __S_IFSOCK
-# define S_ISSOCK(mode) __S_ISTYPE((mode), __S_IFSOCK)
-#elif defined __USE_XOPEN2K
-# define S_ISSOCK(mode) 0
-#endif
-/* These are from POSIX.1b.  If the objects are not implemented using separate
-   distinct file types, the macros always will evaluate to zero.  Unlike the
-   other S_* macros the following three take a pointer to a `struct stat'
-   object as the argument.  */
-#ifdef        __USE_POSIX199309
-# define S_TYPEISMQ(buf) __S_TYPEISMQ(buf)
-# define S_TYPEISSEM(buf) __S_TYPEISSEM(buf)
-# define S_TYPEISSHM(buf) __S_TYPEISSHM(buf)
-#endif
-/* Protection bits.  */
-#define        S_ISUID __S_ISUID        /* Set user ID on execution.  */
-#define        S_ISGID        __S_ISGID        /* Set group ID on execution.  */
-#if defined __USE_MISC || defined __USE_XOPEN
-/* Save swapped text after use (sticky bit).  This is pretty well obsolete.  */
-# define S_ISVTX        __S_ISVTX
-#endif
-#define        S_IRUSR        __S_IREAD        /* Read by owner.  */
-#define        S_IWUSR        __S_IWRITE        /* Write by owner.  */
-#define        S_IXUSR        __S_IEXEC        /* Execute by owner.  */
-/* Read, write, and execute by owner.  */
-#define        S_IRWXU        (__S_IREAD|__S_IWRITE|__S_IEXEC)
-#ifdef __USE_MISC
-# define S_IREAD        S_IRUSR
-# define S_IWRITE        S_IWUSR
-# define S_IEXEC        S_IXUSR
-#endif
-#define        S_IRGRP        (S_IRUSR >> 3)        /* Read by group.  */
-#define        S_IWGRP        (S_IWUSR >> 3)        /* Write by group.  */
-#define        S_IXGRP        (S_IXUSR >> 3)        /* Execute by group.  */
-/* Read, write, and execute by group.  */
-#define        S_IRWXG        (S_IRWXU >> 3)
-#define        S_IROTH        (S_IRGRP >> 3)        /* Read by others.  */
-#define        S_IWOTH        (S_IWGRP >> 3)        /* Write by others.  */
-#define        S_IXOTH        (S_IXGRP >> 3)        /* Execute by others.  */
-/* Read, write, and execute by others.  */
-#define        S_IRWXO        (S_IRWXG >> 3)
-#ifdef        __USE_MISC
-/* Macros for common mode bit masks.  */
-# define ACCESSPERMS (S_IRWXU|S_IRWXG|S_IRWXO) /* 0777 */
-# define ALLPERMS (S_ISUID|S_ISGID|S_ISVTX|S_IRWXU|S_IRWXG|S_IRWXO)/* 07777 */
-# define DEFFILEMODE (S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)/* 0666*/
-# define S_BLKSIZE        512        /* Block size for `st_blocks'.  */
-#endif
-#ifndef __USE_FILE_OFFSET64
-/* Get file attributes for FILE and put them in BUF.  */
-extern int stat (const char *__restrict __file,
-                 struct stat *__restrict __buf) __THROW __nonnull ((1, 2));
-/* Get file attributes for the file, device, pipe, or socket
-   that file descriptor FD is open on and put them in BUF.  */
-extern int fstat (int __fd, struct stat *__buf) __THROW __nonnull ((2));
-#else
-# ifdef __REDIRECT_NTH
-extern int __REDIRECT_NTH (stat, (const char *__restrict __file,
-                                  struct stat *__restrict __buf), stat64)
-     __nonnull ((1, 2));
-extern int __REDIRECT_NTH (fstat, (int __fd, struct stat *__buf), fstat64)
-     __nonnull ((2));
-# else
-#  define stat stat64
-#  define fstat fstat64
-# endif
-#endif
-#ifdef __USE_LARGEFILE64
-extern int stat64 (const char *__restrict __file,
-                   struct stat64 *__restrict __buf) __THROW __nonnull ((1, 2));
-extern int fstat64 (int __fd, struct stat64 *__buf) __THROW __nonnull ((2));
-#endif
-#ifdef __USE_ATFILE
-/* Similar to stat, get the attributes for FILE and put them in BUF.
-   Relative path names are interpreted relative to FD unless FD is
-   AT_FDCWD.  */
-# ifndef __USE_FILE_OFFSET64
-extern int fstatat (int __fd, const char *__restrict __file,
-                    struct stat *__restrict __buf, int __flag)
-     __THROW __nonnull ((2, 3));
-# else
-#  ifdef __REDIRECT_NTH
-extern int __REDIRECT_NTH (fstatat, (int __fd, const char *__restrict __file,
-                                     struct stat *__restrict __buf,
-                                     int __flag),
-                           fstatat64) __nonnull ((2, 3));
-#  else
-#   define fstatat fstatat64
-#  endif
-# endif
-# ifdef __USE_LARGEFILE64
-extern int fstatat64 (int __fd, const char *__restrict __file,
-                      struct stat64 *__restrict __buf, int __flag)
-     __THROW __nonnull ((2, 3));
-# endif
-#endif
-#if defined __USE_XOPEN_EXTENDED || defined __USE_XOPEN2K
-# ifndef __USE_FILE_OFFSET64
-/* Get file attributes about FILE and put them in BUF.
-   If FILE is a symbolic link, do not follow it.  */
-extern int lstat (const char *__restrict __file,
-                  struct stat *__restrict __buf) __THROW __nonnull ((1, 2));
-# else
-#  ifdef __REDIRECT_NTH
-extern int __REDIRECT_NTH (lstat,
-                           (const char *__restrict __file,
-                            struct stat *__restrict __buf), lstat64)
-     __nonnull ((1, 2));
-#  else
-#   define lstat lstat64
-#  endif
-# endif
-# ifdef __USE_LARGEFILE64
-extern int lstat64 (const char *__restrict __file,
-                    struct stat64 *__restrict __buf)
-     __THROW __nonnull ((1, 2));
-# endif
-#endif
-/* Set file access permissions for FILE to MODE.
-   If FILE is a symbolic link, this affects its target instead.  */
-extern int chmod (const char *__file, __mode_t __mode)
-     __THROW __nonnull ((1));
-#ifdef __USE_MISC
-/* Set file access permissions for FILE to MODE.
-   If FILE is a symbolic link, this affects the link itself
-   rather than its target.  */
-extern int lchmod (const char *__file, __mode_t __mode)
-     __THROW __nonnull ((1));
-#endif
-/* Set file access permissions of the file FD is open on to MODE.  */
-#if defined __USE_POSIX199309 || defined __USE_XOPEN_EXTENDED
-extern int fchmod (int __fd, __mode_t __mode) __THROW;
-#endif
-#ifdef __USE_ATFILE
-/* Set file access permissions of FILE relative to
-   the directory FD is open on.  */
-extern int fchmodat (int __fd, const char *__file, __mode_t __mode,
-                     int __flag)
-     __THROW __nonnull ((2)) __wur;
-#endif /* Use ATFILE.  */
-/* Set the file creation mask of the current process to MASK,
-   and return the old creation mask.  */
-extern __mode_t umask (__mode_t __mask) __THROW;
-#ifdef        __USE_GNU
-/* Get the current `umask' value without changing it.
-   This function is only available under the GNU Hurd.  */
-extern __mode_t getumask (void) __THROW;
-#endif
-/* Create a new directory named PATH, with permission bits MODE.  */
-extern int mkdir (const char *__path, __mode_t __mode)
-     __THROW __nonnull ((1));
-#ifdef __USE_ATFILE
-/* Like mkdir, create a new directory with permission bits MODE.  But
-   interpret relative PATH names relative to the directory associated
-   with FD.  */
-extern int mkdirat (int __fd, const char *__path, __mode_t __mode)
-     __THROW __nonnull ((2));
-#endif
-/* Create a device file named PATH, with permission and special bits MODE
-   and device number DEV (which can be constructed from major and minor
-   device numbers with the `makedev' macro above).  */
-#if defined __USE_MISC || defined __USE_XOPEN_EXTENDED
-extern int mknod (const char *__path, __mode_t __mode, __dev_t __dev)
-     __THROW __nonnull ((1));
-# ifdef __USE_ATFILE
-/* Like mknod, create a new device file with permission bits MODE and
-   device number DEV.  But interpret relative PATH names relative to
-   the directory associated with FD.  */
-extern int mknodat (int __fd, const char *__path, __mode_t __mode,
-                    __dev_t __dev) __THROW __nonnull ((2));
-# endif
-#endif
-/* Create a new FIFO named PATH, with permission bits MODE.  */
-extern int mkfifo (const char *__path, __mode_t __mode)
-     __THROW __nonnull ((1));
-#ifdef __USE_ATFILE
-/* Like mkfifo, create a new FIFO with permission bits MODE.  But
-   interpret relative PATH names relative to the directory associated
-   with FD.  */
-extern int mkfifoat (int __fd, const char *__path, __mode_t __mode)
-     __THROW __nonnull ((2));
-#endif
-
-#ifdef __USE_ATFILE
-/* Set file access and modification times relative to directory file
-   descriptor.  */
-extern int utimensat (int __fd, const char *__path,
-                      const struct timespec __times[2],
-                      int __flags)
-     __THROW __nonnull ((2));
-#endif
-#ifdef __USE_XOPEN2K8
-/* Set file access and modification times of the file associated with FD.  */
-extern int futimens (int __fd, const struct timespec __times[2]) __THROW;
-#endif
-
-/* To allow the `struct stat' structure and the file type `mode_t'
-   bits to vary without changing shared library major version number,
-   the `stat' family of functions and `mknod' are in fact inline
-   wrappers around calls to `xstat', `fxstat', `lxstat', and `xmknod',
-   which all take a leading version-number argument designating the
-   data structure and bits used.  <bits/stat.h> defines _STAT_VER with
-   the version number corresponding to `struct stat' as defined in
-   that file; and _MKNOD_VER with the version number corresponding to
-   the S_IF* macros defined therein.  It is arranged that when not
-   inlined these function are always statically linked; that way a
-   dynamically-linked executable always encodes the version number
-   corresponding to the data structures it uses, so the `x' functions
-   in the shared library can adapt without needing to recompile all
-   callers.  */
-#ifndef _STAT_VER
-# define _STAT_VER        0
-#endif
-#ifndef _MKNOD_VER
-# define _MKNOD_VER        0
-#endif
-/* Wrappers for stat and mknod system calls.  */
-#ifndef __USE_FILE_OFFSET64
-extern int __fxstat (int __ver, int __fildes, struct stat *__stat_buf)
-     __THROW __nonnull ((3));
-extern int __xstat (int __ver, const char *__filename,
-                    struct stat *__stat_buf) __THROW __nonnull ((2, 3));
-extern int __lxstat (int __ver, const char *__filename,
-                     struct stat *__stat_buf) __THROW __nonnull ((2, 3));
-extern int __fxstatat (int __ver, int __fildes, const char *__filename,
-                       struct stat *__stat_buf, int __flag)
-     __THROW __nonnull ((3, 4));
-#else
-# ifdef __REDIRECT_NTH
-extern int __REDIRECT_NTH (__fxstat, (int __ver, int __fildes,
-                                      struct stat *__stat_buf), __fxstat64)
-     __nonnull ((3));
-extern int __REDIRECT_NTH (__xstat, (int __ver, const char *__filename,
-                                     struct stat *__stat_buf), __xstat64)
-     __nonnull ((2, 3));
-extern int __REDIRECT_NTH (__lxstat, (int __ver, const char *__filename,
-                                      struct stat *__stat_buf), __lxstat64)
-     __nonnull ((2, 3));
-extern int __REDIRECT_NTH (__fxstatat, (int __ver, int __fildes,
-                                        const char *__filename,
-                                        struct stat *__stat_buf, int __flag),
-                           __fxstatat64) __nonnull ((3, 4));
-# else
-#  define __fxstat __fxstat64
-#  define __xstat __xstat64
-#  define __lxstat __lxstat64
-# endif
-#endif
-#ifdef __USE_LARGEFILE64
-extern int __fxstat64 (int __ver, int __fildes, struct stat64 *__stat_buf)
-     __THROW __nonnull ((3));
-extern int __xstat64 (int __ver, const char *__filename,
-                      struct stat64 *__stat_buf) __THROW __nonnull ((2, 3));
-extern int __lxstat64 (int __ver, const char *__filename,
-                       struct stat64 *__stat_buf) __THROW __nonnull ((2, 3));
-extern int __fxstatat64 (int __ver, int __fildes, const char *__filename,
-                         struct stat64 *__stat_buf, int __flag)
-     __THROW __nonnull ((3, 4));
-#endif
-extern int __xmknod (int __ver, const char *__path, __mode_t __mode,
-                     __dev_t *__dev) __THROW __nonnull ((2, 4));
-extern int __xmknodat (int __ver, int __fd, const char *__path,
-                       __mode_t __mode, __dev_t *__dev)
-     __THROW __nonnull ((3, 5));
-#ifdef __USE_EXTERN_INLINES
-/* Inlined versions of the real stat and mknod functions.  */
-__extern_inline int
-__NTH (stat (const char *__path, struct stat *__statbuf))
-{
-  return __xstat (_STAT_VER, __path, __statbuf);
-}
-# if defined __USE_MISC || defined __USE_XOPEN_EXTENDED
-__extern_inline int
-__NTH (lstat (const char *__path, struct stat *__statbuf))
-{
-  return __lxstat (_STAT_VER, __path, __statbuf);
-}
-# endif
-__extern_inline int
-__NTH (fstat (int __fd, struct stat *__statbuf))
-{
-  return __fxstat (_STAT_VER, __fd, __statbuf);
-}
-# ifdef __USE_ATFILE
-__extern_inline int
-__NTH (fstatat (int __fd, const char *__filename, struct stat *__statbuf,
-                int __flag))
-{
-  return __fxstatat (_STAT_VER, __fd, __filename, __statbuf, __flag);
-}
-# endif
-# ifdef __USE_MISC
-__extern_inline int
-__NTH (mknod (const char *__path, __mode_t __mode, __dev_t __dev))
-{
-  return __xmknod (_MKNOD_VER, __path, __mode, &__dev);
-}
-# endif
-# ifdef __USE_ATFILE
-__extern_inline int
-__NTH (mknodat (int __fd, const char *__path, __mode_t __mode,
-                __dev_t __dev))
-{
-  return __xmknodat (_MKNOD_VER, __fd, __path, __mode, &__dev);
-}
-# endif
-# if defined __USE_LARGEFILE64 \
-  && (! defined __USE_FILE_OFFSET64 \
-      || (defined __REDIRECT_NTH && defined __OPTIMIZE__))
-__extern_inline int
-__NTH (stat64 (const char *__path, struct stat64 *__statbuf))
-{
-  return __xstat64 (_STAT_VER, __path, __statbuf);
-}
-#  if defined __USE_MISC || defined __USE_XOPEN_EXTENDED
-__extern_inline int
-__NTH (lstat64 (const char *__path, struct stat64 *__statbuf))
-{
-  return __lxstat64 (_STAT_VER, __path, __statbuf);
-}
-#  endif
-__extern_inline int
-__NTH (fstat64 (int __fd, struct stat64 *__statbuf))
-{
-  return __fxstat64 (_STAT_VER, __fd, __statbuf);
-}
-#  ifdef __USE_ATFILE
-__extern_inline int
-__NTH (fstatat64 (int __fd, const char *__filename, struct stat64 *__statbuf,
-                  int __flag))
-{
-  return __fxstatat64 (_STAT_VER, __fd, __filename, __statbuf, __flag);
-}
-#  endif
-# endif
-#endif
+
+#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+
+#include <sys/_types/_filesec_t.h>
+
+int	chflags(const char *, __uint32_t);
+int	chmodx_np(const char *, filesec_t);
+int	fchflags(int, __uint32_t);
+int	fchmodx_np(int, filesec_t);
+int	fstatx_np(int, struct stat *, filesec_t) __DARWIN_INODE64(fstatx_np);
+int	lchflags(const char *, __uint32_t) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
+int	lchmod(const char *, mode_t) __OSX_AVAILABLE_STARTING(__MAC_10_5, __IPHONE_2_0);
+int	lstatx_np(const char *, struct stat *, filesec_t) __DARWIN_INODE64(lstatx_np);
+int	mkdirx_np(const char *, filesec_t);
+int	mkfifox_np(const char *, filesec_t);
+int	statx_np(const char *, struct stat *, filesec_t) __DARWIN_INODE64(statx_np);
+int	umaskx_np(filesec_t) __OSX_AVAILABLE_BUT_DEPRECATED(__MAC_10_4,__MAC_10_6,__IPHONE_NA,__IPHONE_NA);
+
+#if !__DARWIN_ONLY_64_BIT_INO_T
+/* The following deprecated routines are simillar to stat and friends except provide struct stat64 instead of struct stat  */
+int	fstatx64_np(int, struct stat64 *, filesec_t) __OSX_AVAILABLE_BUT_DEPRECATED(__MAC_10_5,__MAC_10_6,__IPHONE_NA,__IPHONE_NA);
+int	lstatx64_np(const char *, struct stat64 *, filesec_t) __OSX_AVAILABLE_BUT_DEPRECATED(__MAC_10_5,__MAC_10_6,__IPHONE_NA,__IPHONE_NA);
+int	statx64_np(const char *, struct stat64 *, filesec_t) __OSX_AVAILABLE_BUT_DEPRECATED(__MAC_10_5,__MAC_10_6,__IPHONE_NA,__IPHONE_NA);
+int	fstat64(int, struct stat64 *) __OSX_AVAILABLE_BUT_DEPRECATED(__MAC_10_5,__MAC_10_6,__IPHONE_NA,__IPHONE_NA);
+int	lstat64(const char *, struct stat64 *) __OSX_AVAILABLE_BUT_DEPRECATED(__MAC_10_5,__MAC_10_6,__IPHONE_NA,__IPHONE_NA);
+int	stat64(const char *, struct stat64 *) __OSX_AVAILABLE_BUT_DEPRECATED(__MAC_10_5,__MAC_10_6,__IPHONE_NA,__IPHONE_NA);
+#endif /* !__DARWIN_ONLY_64_BIT_INO_T */
+#endif /* (!_POSIX_C_SOURCE || _DARWIN_C_SOURCE) */
+
 __END_DECLS
-#endif /* sys/stat.h  */
+#endif /* !_SYS_STAT_H_ */
