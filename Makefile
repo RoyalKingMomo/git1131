@@ -544,7 +544,7 @@ perllibdir_relative = $(patsubst $(prefix)/%,%,$(perllibdir))
 
 export prefix bindir sharedir sysconfdir gitwebdir perllibdir localedir
 
-CC = cc
+CC = clang
 AR = ar
 RM = rm -f
 DIFF = diff
